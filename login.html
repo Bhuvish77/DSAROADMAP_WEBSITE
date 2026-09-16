@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log in — DSA Roadmap</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span>login.sh</span>
+      </div>
+      <div class="terminal-body">
+        <div class="prompt-line"><span class="accent">$</span> ./login --student</div>
+        <h1 class="auth-heading">Welcome back</h1>
+        <p class="auth-sub">Log in to pick up your DSA roadmap where you left off.</p>
+
+        <div class="error-banner" id="errorBanner"></div>
+        <div class="success-banner" id="successBanner"></div>
+
+        <form id="loginForm">
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" autocomplete="current-password" required />
+          </div>
+
+          <button type="button" class="forgot-link" id="forgotBtn">Forgot password?</button>
+
+          <button type="submit" class="btn-primary" id="submitBtn">Log in</button>
+        </form>
+
+        <div class="auth-footer">
+          New here? <button class="link" id="goSignup">Create an account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs (compat build — simplest to drop into plain HTML/JS) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    redirectIfLoggedIn();
+
+    const form = document.getElementById('loginForm');
+    const errorBanner = document.getElementById('errorBanner');
+    const successBanner = document.getElementById('successBanner');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showError(message) {
+      errorBanner.textContent = message;
+      errorBanner.style.display = 'block';
+      successBanner.style.display = 'none';
+    }
+
+    function showSuccess(message) {
+      successBanner.textContent = message;
+      successBanner.style.display = 'block';
+      errorBanner.style.display = 'none';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBanner.style.display = 'none';
+      successBanner.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in…';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        await logInStudent(email, password);
+        window.location.href = 'app.html';
+      } catch (err) {
+        showError(friendlyAuthError(err));
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log in';
+      }
+    });
+
+    document.getElementById('forgotBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      if (!email) {
+        showError('Enter your email above first, then click "Forgot password?".');
+        return;
+      }
+      try {
+        await sendPasswordReset(email);
+        showSuccess('Password reset email sent — check your inbox.');
+      } catch (err) {
+        showError(friendlyAuthError(err));
+      }
+    });
+
+    document.getElementById('goSignup').addEventListener('click', () => {
+      window.location.href = 'signup.html';
+    });
+  </script>
+</body>
+</html>
